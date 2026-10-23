@@ -1,0 +1,80 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: void_ptt_api
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - APP_NAME=Void API
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET}
+      - AUTH_ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - AUTH_REFRESH_TOKEN_EXPIRE_DAYS=14
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - void_net
+    ports:
+      - "8000:8000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: postgres:16-alpine
+    container_name: void_ptt_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - void_net
+    # Expose only locally if needed for debug/migration from host
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  # Caddy: Zero-config automatic HTTPS reverse proxy (free SSL certificates, HTTP/3, ~15MB RAM)
+  caddy:
+    image: caddy:2-alpine
+    container_name: void_ppt_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    networks:
+      - void_net
+
+networks:
+  void_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,7 @@
+from enum import StrEnum
+
+
+class ErrorCode(StrEnum):
+    USER_NOT_FOUND = "USER_NOT_FOUND"
+    EMAIL_ALREADY_EXISTS = "EMAIL_ALREADY_EXISTS"
+    USER_INACTIVE = "USER_INACTIVE"
