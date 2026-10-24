@@ -3,8 +3,8 @@ from pydantic import EmailStr, Field
 from src.auth.constants import TokenType
 from src.models import CustomModel
 
-
 # Auth Request & Response DTO
+
 
 class LoginRequest(CustomModel):
     email: EmailStr

@@ -12,6 +12,7 @@ from src.users.schemas import UserCreate, UserUpdate
 
 # User Service
 
+
 async def get_user_by_id(session: AsyncSession, user_id: uuid.UUID) -> User | None:
     stmt = select(User).where(User.id == user_id)
     result = await session.execute(stmt)

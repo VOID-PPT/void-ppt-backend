@@ -11,11 +11,11 @@ from src.users.dependencies import UserByIdDep
 from src.users.models import User
 from src.users.schemas import UserRead, UserUpdate
 
-
 router = APIRouter(prefix="/users", tags=["users"])
 DatabaseDep = Annotated[AsyncSession, Depends(get_db)]
 
 # User API Router
+
 
 @router.get(
     "",

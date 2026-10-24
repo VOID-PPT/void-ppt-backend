@@ -23,6 +23,8 @@ async_session_maker = async_sessionmaker(
     autoflush=False,
 )
 
+# Automative generation
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency that provides an async database session per request."""

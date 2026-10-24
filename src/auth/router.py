@@ -19,6 +19,7 @@ DatabaseDep = Annotated[AsyncSession, Depends(get_db)]
 
 # Auth Api Router
 
+
 @router.post(
     "/register",
     response_model=UserRead,

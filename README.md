@@ -1,112 +1,70 @@
-# Void PTT Backend
+# void-ptt-backend
 
-FastAPI Backend được thiết kế theo chuẩn [FastAPI Best Practices](https://github.com/zhanymkanov/fastapi-best-practices), sử dụng **uv** (trình quản lý gói siêu tốc bằng Rust), kiến trúc Domain-Driven, và cấu hình tối ưu chi phí hạ tầng (Startup Production-ready).
+**VOID** is an AI learning-tutor platform: a user picks any subject — business analysis,
+gym, IELTS, economics, Binance, blockchain, anything — and VOID builds a structured
+learning path with slides and study materials grounded in the user's own uploaded
+documents (RAG).
 
----
+This repo is the API service and AI engine: FastAPI + LLM providers + RAG pipeline +
+agent workflows + background job worker. The client lives in
+[`void-ppt-frontend`](../void-ppt-frontend) (mirrored README/AGENTS.md — keep in sync).
 
-## 📁 Cấu trúc Dự án (Domain-Driven Structure)
+## Stack
 
-```text
-void-ptt-backend/
-├── alembic/                 # Async migrations (Alembic)
-│   ├── versions/            # Thư mục chứa các file migration (đánh số theo ngày)
-│   └── env.py               # Async migration runner kết nối SQLAlchemy Base
-├── src/
-│   ├── config.py            # AppSettings chung (môi trường, CORS, DB pool)
-│   ├── database.py          # SQLAlchemy 2.0 AsyncEngine, async_sessionmaker, get_db
-│   ├── models.py            # Base ORM (PostgreSQL naming conventions) & CustomModel (Pydantic)
-│   ├── exceptions.py        # Global AppException hierarchy & exception handler
-│   ├── pagination.py        # Module phân trang chuẩn (PaginationParams, PaginatedResponse)
-│   ├── main.py              # FastAPI app, lifespan, CORS, health check, router registry
-│   ├── auth/                # Domain Xác thực & Phân quyền
-│   │   ├── config.py        # AuthConfig (JWT secret, thuật toán, thời gian hết hạn)
-│   │   ├── constants.py     # TokenType, ErrorCode
-│   │   ├── schemas.py       # Pydantic schemas (Login, Token, Refresh)
-│   │   ├── service.py       # Password hash (pwdlib/Argon2), JWT encode/decode (PyJWT)
-│   │   ├── dependencies.py  # get_current_user, get_current_active_user (Annotated)
-│   │   ├── exceptions.py    # InvalidCredentials, TokenExpired, InvalidToken
-│   │   └── router.py        # Endpoints: /auth/login, /auth/register, /auth/refresh, /auth/me
-│   └── users/               # Domain Quản lý người dùng
-│       ├── models.py        # User ORM model (UUID, email, hashed_password, timestamps)
-│       ├── schemas.py       # UserCreate, UserRead, UserUpdate
-│       ├── constants.py     # ErrorCode
-│       ├── exceptions.py    # UserNotFound, EmailAlreadyExists, UserInactive
-│       ├── service.py       # Business logic (SQL-first)
-│       ├── dependencies.py  # valid_user_id (Dependency validation)
-│       └── router.py        # CRUD /users endpoints với phân trang
-├── tests/                   # Pytest Async tests (httpx ASGITransport)
-│   ├── conftest.py
-│   ├── test_auth.py
-│   └── test_health.py
-├── .env.example             # Mẫu biến môi trường
-├── alembic.ini              # Cấu hình migration
-├── pyproject.toml           # Cấu hình uv, ruff, pytest
-├── Dockerfile               # Multi-stage Dockerfile với uv (~120MB image)
-├── docker-compose.yml       # Production stack: FastAPI + PostgreSQL + Caddy (Auto HTTPS)
-├── Caddyfile                # Reverse proxy tự động cấp chứng chỉ SSL miễn phí
-└── Makefile                 # Lệnh tắt tiện ích
-```
+Python 3.12 · FastAPI · SQLAlchemy 2 (async) · asyncpg · PostgreSQL (Neon + pgvector) ·
+Alembic · Pydantic v2 · uv · OpenTelemetry + structlog
 
----
+## Status
 
-## ⚡ Bắt đầu Nhanh với `uv`
+| Module | State |
+|---|---|
+| `auth/`, `users/` | ✅ complete |
+| `observability/`, `middleware/` (OTel, RED metrics, request-ID, health probes) | ✅ complete |
+| `jobs/` (durable Postgres queue + in-process worker, human-checkpoint support) | ✅ complete |
+| `ai/` (provider abstraction, Gemini free tier, metered + cached client) | ✅ complete |
+| `knowledge/` (ingest → chunk → embed → hybrid retrieval) | 🚧 next (PLAN.md step 4) |
+| `presentations/`, `ai/agents/`, `export/` | 🚧 planned |
 
-### 1. Cài đặt dependencies
+Full architecture and build order: **[PLAN.md](PLAN.md)** · Working agreement: **[AGENTS.md](AGENTS.md)**
+
+## Getting started
+
+Requires [uv](https://docs.astral.sh/uv/) and Postgres (local, Supabase, or Neon).
 
 ```bash
 uv sync --all-groups
+cp .env.example .env       # DATABASE_URL, AUTH_JWT_SECRET, AI_API_KEY (free: aistudio.google.com/apikey)
+make migrate               # alembic upgrade head
+make dev                   # http://localhost:8000 — docs at /docs (local/staging)
 ```
 
-### 2. Chạy ứng dụng local
+Health probes: `/health/live` (process) · `/health/ready` (DB + pool + queue).
 
-```bash
-make dev
-# Hoặc: uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-```
+## Commands
 
-- Swagger Docs (chỉ mở ở local/staging): [http://localhost:8000/docs](http://localhost:8000/docs)
-- Health check: [http://localhost:8000/health](http://localhost:8000/health)
+| Command | Purpose |
+|---|---|
+| `make dev` | Run API with reload |
+| `make test` | Async pytest suite |
+| `make lint` / `make format` | Ruff check / format |
+| `make migrate` / `make revision msg=...` | Alembic |
 
-### 3. Chạy tests & lint
+## Observability
 
-```bash
-make test    # Chạy pytest async test suite
-make lint    # Kiểm tra & tự sửa lỗi với ruff
-make format  # Định dạng code chuẩn ruff
-```
+OpenTelemetry traces/metrics/logs export via OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT`
+is set (Grafana Cloud free tier); otherwise no-op. Every LLM call is metered into
+`ai_usage`, cached in `llm_cache`, and traced with `gen_ai.*` attributes. Structured
+JSON logs with request-ID correlation.
 
----
+## CI/CD
 
-## Kết nối với Supabase
+GitHub Actions (`.github/workflows/ci.yml`): ruff + format check + pytest on every
+push/PR. Deploy: Docker image → Fly.io free tier; Postgres on Neon. Free-tier only —
+see PLAN.md §1.
 
-Khi bạn tạo project trên **Supabase**:
+## Conventions
 
-1. Vào **Project Settings** → **Database** → **Connection string**.
-2. Chọn tab **URI** (hoặc copy Connection parameters).
-3. Đổi protocol thành `postgresql+asyncpg://` và dán vào file `.env`:
-
-```env
-# Định dạng chuẩn với Supabase Connection Pooling (Session mode - port 5432):
-DATABASE_URL="postgresql+asyncpg://postgres.[YOUR-PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres"
-```
-
-> **Lưu ý:**
->
-> - `asyncpg` chạy tốt nhất với **Direct Connection** hoặc **Session Pooler** (port 5432).
-> - Nếu dùng Transaction Pooler (port 6543), cần cấu hình thêm `statement_cache_size=0` trong asyncpg. Do đó dùng port 5432 của Supabase Pooler là tiện và chuẩn nhất.
-
-Sau khi điền `.env`, chạy migration để tạo bảng trên Supabase:
-
-```bash
-make migrate
-# Lệnh tương đương: uv run alembic upgrade head
-```
-
----
-
-## 💰 Chiến Lược Tiết Kiệm Chi Phí Nhất (Cho Startup)
-
-1. **Database:** Dùng **Supabase Free Tier** (500MB DB, automated backup, web UI quản trị, $0/tháng).
-2. **Compute:** Thuê 1 VPS giá rẻ (Hetzner €3.5/tháng hoặc DigitalOcean/Linode $4-$5/tháng) hoặc dùng Free Tier (Oracle Cloud VPS miễn phí 4 OCPU 24GB RAM).
-3. **SSL & Reverse Proxy:** Dùng **Caddy** (có sẵn trong `docker-compose.yml` và `Caddyfile`). Caddy tự động lấy và gia hạn SSL Let's Encrypt hoàn toàn miễn phí, tiêu tốn chỉ ~15MB RAM so với cấu hình Nginx phức tạp.
-4. **Memory Footprint:** Nhờ chạy async coroutines (FastAPI + asyncpg) và Docker image build từ `uv` (~120MB), toàn bộ backend hoạt động trơn tru chỉ với **< 150MB RAM**.
+- Module pattern: `router.py` (thin) → `service.py` → `models.py`/`schemas.py`
+- LLM calls only through `src/ai/client.py` — always metered, cached, traced
+- Long work only through `src/jobs/` — never inline in a request
+- Gate: `uv run ruff check . && uv run ruff format --check . && uv run pytest`

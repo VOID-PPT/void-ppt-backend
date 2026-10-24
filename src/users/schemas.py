@@ -7,6 +7,7 @@ from src.models import CustomModel
 
 # User Request & Response DTO
 
+
 class UserBase(CustomModel):
     email: EmailStr
     full_name: str | None = Field(default=None, max_length=255)
