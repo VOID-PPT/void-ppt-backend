@@ -30,3 +30,8 @@ htmlcov/
 *.swp
 *.swo
 .DS_Store
+
+# Local secrets — never commit
+secret.md
+*.secret.md
+secrets/
