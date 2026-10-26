@@ -26,9 +26,7 @@ class AuthConfig(BaseSettings):
         import os
 
         if not value and os.getenv("ENVIRONMENT") not in {"test"}:
-            msg = (
-                "AUTH_JWT_SECRET is required. Generate one with: openssl rand -hex 32"
-            )
+            msg = "AUTH_JWT_SECRET is required. Generate one with: openssl rand -hex 32"
             raise ValueError(msg)
         return value
 
