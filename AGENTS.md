@@ -20,6 +20,19 @@
 | Pair repo | `void-ppt-frontend` (React 19 SPA) |
 | Team | 2 people, free-tier infrastructure only |
 
+## Documentation index
+
+Root-level `.md` files are root **on purpose** — agents and GitHub only auto-discover them there:
+
+| File | Purpose | Read when |
+|---|---|---|
+| `README.md` | Human onboarding: stack, setup, commands | First visit |
+| `AGENTS.md` | This file — rules, gates, skill triggers | Every session |
+| `SKILLS.md` | Skill list + install loop (machine-local, not committed) | Missing a skill |
+| `PLAN.md` | Solution architecture, module map, 8-step build order | Starting any feature |
+
+Move `PLAN.md` into `docs/` only when more than ~6 markdown files exist or ADRs/runbooks appear.
+
 ## Layout
 
 ```
