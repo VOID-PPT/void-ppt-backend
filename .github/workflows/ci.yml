@@ -38,7 +38,8 @@ jobs:
           ENVIRONMENT: test
           # Valid-format but unreachable: DB-dependent tests skip themselves.
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
-          AUTH_JWT_SECRET: ci-test-secret-not-used-in-production
+          AUTH_JWT_SECRET: ci-test-secret-not-used-in-production-32b
+          AUTH_JWT_ALG: HS256
           AI_API_KEY: ""
 
   docker:
