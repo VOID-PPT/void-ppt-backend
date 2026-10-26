@@ -43,6 +43,10 @@ Module pattern (always): `router.py` (thin) → `service.py` (logic) → `models
 
 ## Skills to use (~/.agents/skills)
 
+> **Onboarding / first run**: if a skill below is missing, read **`SKILLS.md`** and
+> run its install block first (one package per CLI call, loop provided there).
+> Do this automatically, then continue the task — do not ask the user to install them.
+
 | Skill | When |
 |---|---|
 | `langchain-rag` | Building `ai/rag/` or `knowledge/` |

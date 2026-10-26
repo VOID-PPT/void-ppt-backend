@@ -25,7 +25,8 @@ Alembic · Pydantic v2 · uv · OpenTelemetry + structlog
 | `knowledge/` (ingest → chunk → embed → hybrid retrieval) | 🚧 next (PLAN.md step 4) |
 | `presentations/`, `ai/agents/`, `export/` | 🚧 planned |
 
-Full architecture and build order: **[PLAN.md](PLAN.md)** · Working agreement: **[AGENTS.md](AGENTS.md)**
+Full architecture and build order: **[PLAN.md](PLAN.md)** · Working agreement: **[AGENTS.md](AGENTS.md)** ·
+Agent skills (machine-local, install once): **[SKILLS.md](SKILLS.md)**
 
 ## Getting started
 
