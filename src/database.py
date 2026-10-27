@@ -8,12 +8,18 @@ from sqlalchemy.ext.asyncio import (
 
 from src.config import settings
 
+# Pooled endpoints
+# preserve server-side prepared statements across checkouts. Disabling the asyncpg
+_connect_args: dict[str, object] = {"statement_cache_size": 0}
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    settings.async_database_url,
     echo=settings.DB_ECHO,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
     pool_pre_ping=True,
+    pool_recycle=settings.DB_POOL_RECYCLE_SECONDS,
+    connect_args=_connect_args,
 )
 
 async_session_maker = async_sessionmaker(
@@ -22,8 +28,6 @@ async_session_maker = async_sessionmaker(
     expire_on_commit=False,
     autoflush=False,
 )
-
-# Automative generation
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

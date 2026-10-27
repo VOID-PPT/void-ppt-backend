@@ -5,6 +5,8 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+import src.ai.models  # noqa: F401
+import src.jobs.models  # noqa: F401
 import src.users.models  # noqa: F401
 from alembic import context
 from src.config import settings
@@ -20,7 +22,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
-config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL))
+# Migrations use the DIRECT endpoint when configured: pooled transaction-mode
+# endpoints (Neon/Supabase poolers) can fail on DDL and advisory locks.
+config.set_main_option("sqlalchemy.url", settings.async_direct_url)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

@@ -33,6 +33,14 @@ async def session() -> AsyncIterator[AsyncSession]:
     from src.database import async_session_maker
 
     async with async_session_maker() as s:
+        # Isolate: clear leftover test jobs from earlier runs. Scoped to the
+        # `test.` job-type prefix so real queued work is never touched.
+        from sqlalchemy import delete
+
+        from src.jobs.models import Job
+
+        await s.execute(delete(Job).where(Job.job_type.like("test.%")))
+        await s.commit()
         yield s
 
 

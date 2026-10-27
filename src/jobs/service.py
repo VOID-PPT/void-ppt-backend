@@ -55,7 +55,12 @@ async def claim_next(session: AsyncSession) -> Job | None:
         .execution_options(synchronize_session=False)
     )
     await session.commit()
-    return await session.get(Job, job_id)
+    # `expire_on_commit=False` + synchronize_session=False leave any cached
+    # instance stale, so reload explicitly to return the claimed state.
+    job = await session.get(Job, job_id, populate_existing=True)
+    if job is not None:
+        await session.refresh(job)
+    return job
 
 
 async def complete(session: AsyncSession, job: Job, result: dict[str, Any] | None) -> None:
